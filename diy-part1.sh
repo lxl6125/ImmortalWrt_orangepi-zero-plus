@@ -10,9 +10,10 @@
 # Description: OpenWrt DIY script part 1 (Before Update feeds)
 #
 
-# Uncomment a feed source
-#sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
+# Modify default IP
+sed -i 's/192.168.1.1/192.168.1.2/g' package/base-files/files/bin/config_generate
 
-# Add a feed source
-#echo 'src-git helloworld https://github.com/fw876/helloworld' >>feeds.conf.default
-#echo 'src-git passwall https://github.com/xiaorouji/openwrt-passwall' >>feeds.conf.default
+# Add build date to index page
+sed -i "s/%R/($(date +"%Y-%m-%d"))/g" package/base-files/files/etc/openwrt_release
+sed -i "s/%V %C/%V/g" package/base-files/files/etc/openwrt_release
+

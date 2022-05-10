@@ -8,7 +8,7 @@
 # Description: Build OpenWrt using GitHub Actions
 #
 
-name: Build OpenWrt
+name: orangepi-zero-plus
 
 on:
   repository_dispatch:
@@ -18,10 +18,12 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
+  schedule:
+    - cron: 0 10 ? * 5
 
 env:
-  REPO_URL: https://github.com/coolsnowwolf/lede
-  REPO_BRANCH: master
+  REPO_URL: https://github.com/lxl6125/immortalwrt
+  REPO_BRANCH: openwrt-18.06-k5.4
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
   DIY_P1_SH: diy-part1.sh
@@ -30,7 +32,7 @@ env:
   UPLOAD_FIRMWARE: true
   UPLOAD_COWTRANSFER: false
   UPLOAD_WETRANSFER: false
-  UPLOAD_RELEASE: false
+  UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
 
 jobs:
@@ -58,28 +60,34 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH openwrt
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        git clone $REPO_URL -b $REPO_BRANCH immortalwrt
+        ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
+
+    - name: Cache
+      uses: klever1988/cachewrtbuild@main
+      with:
+        ccache: 'true'
+        prefix: ${{ github.workspace }}/immortalwrt
 
     - name: Load custom feeds
       run: |
-        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF immortalwrt/feeds.conf.default
         chmod +x $DIY_P1_SH
-        cd openwrt
+        cd immortalwrt
         $GITHUB_WORKSPACE/$DIY_P1_SH
 
     - name: Update feeds
-      run: cd openwrt && ./scripts/feeds update -a
+      run: cd immortalwrt && ./scripts/feeds update -a
 
     - name: Install feeds
-      run: cd openwrt && ./scripts/feeds install -a
+      run: cd immortalwrt && ./scripts/feeds install -a
 
     - name: Load custom configuration
       run: |
-        [ -e files ] && mv files openwrt/files
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        [ -e files ] && mv files immortalwrt/files
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE immortalwrt/.config
         chmod +x $DIY_P2_SH
-        cd openwrt
+        cd immortalwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
     - name: SSH connection to Actions
@@ -92,7 +100,7 @@ jobs:
     - name: Download package
       id: package
       run: |
-        cd openwrt
+        cd immortalwrt
         make defconfig
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
@@ -101,13 +109,14 @@ jobs:
     - name: Compile the firmware
       id: compile
       run: |
-        cd openwrt
+        cd immortalwrt
+        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+        echo "TAG_DATE=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
         echo "::set-output name=status::success"
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
-        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
     - name: Check space usage
       if: (!cancelled())
@@ -117,14 +126,14 @@ jobs:
       uses: actions/upload-artifact@main
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
-        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-        path: openwrt/bin
+        name: ImmortalWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: immortalwrt/bin
 
     - name: Organize files
       id: organize
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
-        cd openwrt/bin/targets/*/*
+        cd immortalwrt/bin/targets/*/*
         rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "::set-output name=status::success"
@@ -133,7 +142,7 @@ jobs:
       uses: actions/upload-artifact@main
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
-        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: ImmortalWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE }}
 
     - name: Upload firmware to cowtransfer
@@ -158,7 +167,7 @@ jobs:
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
+        echo "::set-output name=release_tag::${{ env.TAG_DATE }}"
         touch release.txt
         [ $UPLOAD_COWTRANSFER = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
         [ $UPLOAD_WETRANSFER = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
