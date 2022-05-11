@@ -10,22 +10,13 @@
 # Description: OpenWrt DIY script part 2 (After Update feeds)
 #
 
-# Use Lean's qBittorrent
-rm -rf feeds/luci/applications/luci-app-qbittorrent feeds/packages/net/qBittorrent-Enhanced-Edition feeds/packages/libs/qt5
-svn export https://github.com/coolsnowwolf/luci/trunk/applications/luci-app-qbittorrent feeds/luci/applications/luci-app-qbittorrent
-svn export https://github.com/coolsnowwolf/packages/trunk/net/qBittorrent-static package/custom/qBittorrent-static
-svn export https://github.com/coolsnowwolf/packages/trunk/net/qBittorrent package/custom/qBittorrent
-svn export https://github.com/coolsnowwolf/packages/trunk/libs/qtbase package/custom/qtbase
-svn export https://github.com/coolsnowwolf/packages/trunk/libs/qttools package/custom/qttools
-svn export https://github.com/coolsnowwolf/packages/trunk/libs/rblibtorrent package/custom/rblibtorrent
+# Using qBittorrent-Enhanced-Edition static binaries
+rm -rf feeds/packages/net/qBittorrent-Enhanced-Edition
+svn export https://github.com/lxl6125/openwrt-qbittorrent-enhanced-static/trunk/qBittorrent-Enhanced-Edition feeds/packages/net/qBittorrent-Enhanced-Edition
 
 # Replace luci-app-vssr
 rm -rf feeds/luci/applications/luci-app-vssr
 git clone --depth=1 https://github.com/jerrykuku/luci-app-vssr feeds/luci/applications/luci-app-vssr
-
-# Replace luci-app-passwall
-rm -rf feeds/luci/applications/luci-app-passwall
-svn export https://github.com/xiaorouji/openwrt-passwall/branches/luci/luci-app-passwall feeds/luci/applications/luci-app-passwall
 
 # Replace luci-app-openclash
 rm -rf feeds/luci/applications/luci-app-openclash
