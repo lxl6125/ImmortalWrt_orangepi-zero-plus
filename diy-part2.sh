@@ -18,6 +18,11 @@ svn export https://github.com/lxl6125/openwrt-qbittorrent-enhanced-static/trunk/
 rm -rf feeds/luci/applications/luci-app-vssr
 git clone --depth=1 https://github.com/jerrykuku/luci-app-vssr feeds/luci/applications/luci-app-vssr
 
+# Replace luci-app-passwall
+rm -rf feeds/luci/applications/luci-app-passwall
+svn export https://github.com/xiaorouji/openwrt-passwall/branches/luci/luci-app-passwall feeds/luci/applications/luci-app-passwall
+git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall package/custom/passwall
+
 # Replace luci-app-openclash
 rm -rf feeds/luci/applications/luci-app-openclash
 svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash feeds/luci/applications/luci-app-openclash
