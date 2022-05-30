@@ -22,7 +22,7 @@ on:
     - cron: 0 10 ? * 5
 
 env:
-  REPO_URL: https://github.com/lxl6125/immortalwrt
+  REPO_URL: https://github.com/immortalwrt/immortalwrt
   REPO_BRANCH: openwrt-18.06-k5.4
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
@@ -89,6 +89,7 @@ jobs:
         chmod +x $DIY_P2_SH
         cd immortalwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
+        rm -rf tmp
 
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
