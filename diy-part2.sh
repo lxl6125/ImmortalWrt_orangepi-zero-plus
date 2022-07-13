@@ -10,10 +10,6 @@
 # Description: OpenWrt DIY script part 2 (After Update feeds)
 #
 
-# Replace luci-app-vssr
-rm -rf feeds/luci/applications/luci-app-vssr
-git clone --depth=1 https://github.com/jerrykuku/luci-app-vssr feeds/luci/applications/luci-app-vssr
-
 # Replace luci-app-openclash
 rm -rf feeds/luci/applications/luci-app-openclash
 svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash feeds/luci/applications/luci-app-openclash
